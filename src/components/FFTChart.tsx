@@ -32,7 +32,7 @@ const chartData = Array.from(fftData || []).slice(0,50).map((value, index) => ({
     magnitude: value * -1,
 }));
   return (
-    <Card>
+    <Card className="w-[400px] inline-block">
       <CardHeader>
         <CardTitle>Fourier Transform</CardTitle>
         <CardDescription>Frequency spectrum of data</CardDescription>
