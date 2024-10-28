@@ -29,7 +29,7 @@ function distanceBetween(n1: Note, n2: Note): number {
     return n2Midi - n1Midi;
 }
 
-function noteToTab(note: Note, tuning: Note[],prevFret?: number,prevBeforeFret?:number): TabNote {
+function noteToTab(note: Note, tuning: Note[],prevFret?: number,prevBeforeFret?:number): TabNote | null {
     // There are multiple locations the note can be played.
     // We will choose the one that is closest to the previous note
     // or if there is no previous note, the one closest to the middle of the fretboard
@@ -46,6 +46,9 @@ function noteToTab(note: Note, tuning: Note[],prevFret?: number,prevBeforeFret?:
     })).filter(noteLocation => noteLocation.fret >= 0)
     .filter(noteLocation => noteLocation.fret <= 15)
 
+    if (noteLocations.length === 0) {
+        return null;
+    }
 
     
     const closestNote = noteLocations.reduce((closest, current) => {
@@ -69,13 +72,14 @@ const useTab = () => {
     function addNote(note: Note) {
         
         setTab(tab=>{
-            if (tab.length === 0) {
-                return [noteToTab(note, TUNING)];
-            } 
-            const prevNote = tab[tab.length - 1];
-            const prevBeforeNote = tab.length == 1 ? prevNote : tab[tab.length - 2];
+            const prevNote = tab.length == 0 ? {fret:0,string:0} : tab[tab.length - 1];
+            const prevBeforeNote = tab.length <= 1 ? prevNote : tab[tab.length - 2];
             const newNote = noteToTab(note, TUNING, prevNote.fret, prevBeforeNote.fret);
-            return [...tab,newNote];
+            if (newNote == null) {
+                return tab;
+            } else {
+                return [...tab,newNote];
+            }
         });
     }
 
