@@ -1,21 +1,17 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card"
 import {
   ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartContainer
 } from "@/components/ui/chart"
 
 

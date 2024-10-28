@@ -1,32 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Pitchfinder from 'pitchfinder';
 import { SCALE } from './scale';
 import { Note } from './useTab';
+import { PitchDetector } from 'pitchfinder/lib/detectors/types';
 
 
 const useAudio= (onNoteDetected: (note:Note)=>any )=>{
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    const [note, setNote] = useState<Note>(null);
-    const pitchDetectorRef = useRef(null);
-    const audioStreamRef = useRef(null);
+    const [note, setNote] = useState<Note | null>(null);
+    const pitchDetectorRef = useRef<PitchDetector | null>(null);
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
     const [fftData,setfftData] = useState<Float32Array | null>(null);
 
 
     const startPitchDetection = () => {
-        const bufferLength = analyserRef.current.fftSize;
+        const bufferLength = analyserRef.current!.fftSize;
         const timeArray = new Float32Array(bufferLength);
         const frequencyArray = new Float32Array(bufferLength);
-        let previousAmplitude = 0;
         let previousNote = "";
         let timeSinceDetection = 0;
         const amplitudeThreshold = 0.03; // Adjust this threshold as needed
         let ampPass = 100;
     
         const detectPitch = () => {
-            analyserRef.current.getFloatTimeDomainData(timeArray);
-            analyserRef.current.getFloatFrequencyData(frequencyArray);
+            if(!analyserRef.current) {
+                console.error('Analyser node not initialized');
+                return;
+            }
+            if(!pitchDetectorRef.current) {
+                console.error('Pitch detector not initialized');
+                return;
+            }
+            analyserRef.current!.getFloatTimeDomainData(timeArray);
+            analyserRef.current!.getFloatFrequencyData(frequencyArray);
             setfftData(frequencyArray);
 
 
@@ -52,7 +59,6 @@ const useAudio= (onNoteDetected: (note:Note)=>any )=>{
                     timeSinceDetection++;
                 }
                 // Update previous amplitude
-                previousAmplitude = currentAmplitude;
                 ampPass = ampPass * 0.7 + currentAmplitude * 0.3;
 
             }
@@ -65,7 +71,6 @@ const useAudio= (onNoteDetected: (note:Note)=>any )=>{
 
     const getNoteFromFrequency = (frequency:number): Note => {
         const A4 = 440;
-        const semitoneRatio = Math.pow(2, 1 / 12);
         const noteNumber = Math.round(12 * Math.log2(frequency / A4)) + 69; // MIDI note number
         
         const octave = Math.floor(noteNumber / 12) - 1;
@@ -81,7 +86,7 @@ const useAudio= (onNoteDetected: (note:Note)=>any )=>{
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setMediaStream(stream);
-                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                audioContextRef.current = new window.AudioContext();
                 analyserRef.current = audioContextRef.current.createAnalyser();
                 analyserRef.current.fftSize = 1024;
 
@@ -102,9 +107,6 @@ const useAudio= (onNoteDetected: (note:Note)=>any )=>{
 
     const stopDetection = () => {
         // Cleanup audio streams
-        if (audioStreamRef.current) {
-            audioStreamRef.current.getTracks().forEach((track) => track.stop());
-        }
         if (audioContextRef.current) {
             audioContextRef.current.close();
         }

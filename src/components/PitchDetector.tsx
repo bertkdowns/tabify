@@ -1,7 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
 import FFTChart from './FFTChart';
-import Pitchfinder from 'pitchfinder';
-import { SCALE } from './scale';
 import useAudio from './useAudio';
 import useTab, { Note, TUNING } from './useTab';
 import TabViewer from './TabViewer';
